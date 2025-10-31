@@ -1,0 +1,2 @@
+export const USE_COOKIE_BASED_AUTHENTICATION =
+  process.env.USE_COOKIE_BASED_AUTHENTICATION === 'true'
