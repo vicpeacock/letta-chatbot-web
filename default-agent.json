@@ -2,7 +2,7 @@
   "DEFAULT_MEMORY_BLOCKS": [
     {
       "label": "human",
-      "value": "The human's name is Vincenzo the Professor"
+      "value": "The human's name is [Your Name]"
     },
     {
       "label": "persona",

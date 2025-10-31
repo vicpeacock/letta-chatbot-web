@@ -1,0 +1,68 @@
+services:
+  # Letta Server
+  letta-server:
+    image: letta/letta:latest
+    container_name: letta-server
+    ports:
+      - "8283:8283"
+    env_file:
+      - .env.docker
+    environment:
+      - LETTA_API_KEY=${LETTA_API_KEY:-DEFAULT_TOKEN}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - MODEL_RUNNER_ENDPOINT=${MODEL_RUNNER_ENDPOINT:-http://model-runner.docker.internal/engines/v1}
+      - EXA_API_KEY=${EXA_API_KEY:-}
+    volumes:
+      - letta-data:/app/data
+    networks:
+      - letta-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # No dependencies needed since Ollama runs on host
+
+
+  # Next.js Chatbot (Development)
+  chatbot:
+    build:
+      context: ./letta-chatbot-web
+      dockerfile: Dockerfile.dev
+    container_name: chatbot
+    ports:
+      - "3001:3000"
+    env_file:
+      - .env.docker
+    environment:
+      - LETTA_API_KEY=${LETTA_API_KEY:-DEFAULT_TOKEN}
+      - LETTA_BASE_URL=${LETTA_BASE_URL:-http://letta-server:8283}
+      - USE_COOKIE_BASED_AUTHENTICATION=${USE_COOKIE_BASED_AUTHENTICATION:-true}
+      - NEXT_PUBLIC_CREATE_AGENTS_FROM_UI=${NEXT_PUBLIC_CREATE_AGENTS_FROM_UI:-true}
+      - EXA_API_KEY=${EXA_API_KEY:-}
+    volumes:
+      - ./letta-chatbot-web:/app
+      - /app/node_modules
+    networks:
+      - letta-network
+    depends_on:
+      - letta-server
+    command: ["npm", "run", "dev"]
+
+  # MCP Gateway
+  mcp-gateway:
+    image: corespeedio/mcp-gateway
+    container_name: mcp-gateway
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env.docker
+    environment:
+      - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY:-}
+      - GOOGLE_MAPS_CX=${GOOGLE_MAPS_CX:-}
+    networks:
+      - letta-network
+
+volumes:
+  letta-data:
+
+networks:
+  letta-network:
+    driver: bridge
